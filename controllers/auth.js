@@ -1,8 +1,7 @@
 const crypto = require('crypto');
-
 const User = require('../models/user');
 const bcrypt = require('bcryptjs');
-const user = require('../models/user');
+const { validationResult } = require('express-validator')
 
 exports.getLogin = (req, res, next) => {
    // console.log(req.session.isLoggedIn);
@@ -11,19 +10,47 @@ exports.getLogin = (req, res, next) => {
     res.render('auth/login', {
         path: '/login',
         pageTitle: 'Login',
-        errorMessage: message
+        errorMessage: message,
+        oldInput: { 
+          email: "",
+          password: ""
+        },
+        validationErrors :[]
     })    
 };
 
 exports.postLogin = (req, res, next) => {
     const email = req.body.email;
     const password = req.body.password;
+
+    const errors = validationResult(req);
+    if(!errors.array().isEmpty){
+      return res.status(422).render('auth/login' , {
+        path: 'login',
+        pageTitle: 'Login',
+        errorMessage: errors.array()[0].msg,
+        oldInput: { 
+          email: email,
+          password: password
+        },
+        validationErrors: errors.array()
+      })
+    }
+
     User.findOne({email:email})
       .then(user => {
         console.log(user);
         if(!user){
-          req.flash('errors', 'Invalid email or password.');
-          return res.redirect('/login');
+          return res.status(422).render('auth/login' , {
+            path: 'login',
+            pageTitle: 'Login',
+            errorMessage: errors.array()[0].msg,
+            oldInput: { 
+              email: email,
+              password: password
+            },
+            validationErrors: []
+          })
         }
         bcrypt.compare(password, user.password)
         .then(matched => {
@@ -35,8 +62,16 @@ exports.postLogin = (req, res, next) => {
               res.redirect('/');
             });
           }
-          req.flash('error', 'Invalid email or password.');
-          res.redirect('/login')
+          res.status(422).render('auth/login' , {
+            path: 'login',
+            pageTitle: 'Login',
+            errorMessage: errors.array()[0].msg,
+            oldInput: { 
+              email: email,
+              password: password
+            },
+            validationErrors: []
+          })
         })
         .catch(err => {
           console.log(err);
@@ -52,42 +87,51 @@ exports.getSignup = (req, res, next) =>{
   res.render('auth/signup' , {
     path:'/signup',
     pageTitle: 'Signup',
-    errorMessage: message
+    errorMessage: message,
+    oldInput: { 
+      email: "",
+      password: "",
+      confirmPassword: ""
+    }
   });
 };
 
 exports.postSignup = (req, res, next) =>{
-  console.log(req.body);
   const email = req.body.email;
   const password = req.body.password;
-  const confirmPassword = req.body.confirmPassword;
-
-
-  User.findOne({email: email})
-    .then(userDoc => {
-
-      if(userDoc){
-        req.flash('errors', 'Email already exists, please choose different email');
-        return res.redirect('/signup');
-      }
+  const errors = validationResult(req);
   
-      return bcrypt.hash(password, 12)
-      .then(hashedPass => {
-        const user = new User({
-          password: hashedPass,
-          email:email,
-          cart:{ items: []}
-        })
 
-        return user.save();
-        
-      })
-      .then(result => {
-        res.redirect('/login')
-      })
-  
+  if(!errors.isEmpty()){
+    console.log(errors.array());
+    return res.status(422).render('auth/signup',{
+      path:'/signup',
+      pageTitle: 'sign up',
+      errorMessage: errors.array()[0].msg,
+      oldInput: { 
+        email: email,
+        password: password,
+        confirmPassword: req.body.confirmPassword
+      },
+      validationErrors: errors.array()
+    });
+  }
+
+  return bcrypt.hash(password, 12)
+  .then(hashedPass => {
+    const user = new User({
+      password: hashedPass,
+      email:email,
+      cart:{ items: []}
+    })
+
+    return user.save();
+    
   })
-  .catch(err => console.log(err))  
+  .then(result => {
+    res.redirect('/login')
+  })
+ 
 };
 
 exports.postLogout = (req, res, next) => {

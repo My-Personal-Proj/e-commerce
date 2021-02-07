@@ -8,7 +8,7 @@
     "start": "nodemon app.js",
     "start-server": "node app.js"
   },
-  "author": "Maximilian Schwarzmüller",
+  "author": "Shameel Nkosi",
   "license": "ISC",
   "devDependencies": {
     "nodemon": "^1.18.3"
@@ -23,12 +23,9 @@
     "express": "^4.16.3",
     "express-handlebars": "^3.0.0",
     "express-session": "^1.17.1",
+    "express-validator": "^6.9.2",
     "mongodb": "^3.6.3",
     "mongoose": "^5.11.13",
-    "mysql2": "^2.2.5",
-    "nodemailer": "^6.4.17",
-    "nodemailer-sendgrid-transport": "^0.2.0",
-    "pug": "^2.0.3",
-    "sequelize": "^6.3.5"
+    "pug": "^2.0.3"
   }
 }
