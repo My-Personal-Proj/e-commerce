@@ -1,5 +1,11 @@
 const Product = require('../models/product');
 const Order = require('../models/order');
+const fs = require('fs');
+const path = require('path');
+const fileHelper = require('../util/file');
+
+
+const pdfDocument = require('pdfkit')
 
 exports.getProducts = (req, res, next) => {  
   Product.find()
@@ -135,3 +141,47 @@ exports.getOrders = (req, res, next) => {
   
 };
 
+exports.getInvoice = (req , res, next)=>{
+  // Get order ID and  construct name and path of the invoice
+  const orderId = req.params.orderId;
+
+  Order.findById(orderId)
+  .then(order => {
+    if(!order){
+      return next(new Error('No order Found'));
+    }
+    if(order.user._id.toString() !== req.user._id.toString()){
+      return next(new Error('Unauthorized'));
+    }
+
+    const invoiceName = `invoice-${orderId}.pdf`;
+    const invoicePath = path.join('data', 'invoices' , invoiceName);
+    
+    const pdfDoc = new pdfDocument();
+    pdfDoc.pipe(fs.createWriteStream(invoicePath));
+    pdfDoc.pipe(res);
+
+    pdfDoc
+    .fontSize(26)
+    .text('Invoice',{underline: true})
+
+    pdfDoc.text('-----------------------------------------------');;
+    let totalPrice  = 0;
+    order.items.forEach(item => {
+      const prod = item.product;
+      totalPrice += item.quantity*prod.price;
+      pdfDoc.fontSize(14).text(`${prod.title}  -  R${prod.price} - Qty: ${item.quantity}`);
+    });
+    
+    pdfDoc.text(`\n\nTotal Price: ${totalPrice}`)
+    pdfDoc.end();
+
+    // Here we are streaming the file to the client and not preloading it.
+    res.setHeader('Content-Type','application/pdf');
+    res.setHeader(
+      'Content-Disposition',
+      `inline; filename="invoice.pdf"`
+    );
+
+  });
+}

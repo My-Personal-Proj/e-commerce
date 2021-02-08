@@ -14,8 +14,6 @@ let EditArray = [
         .isString()
         .isLength({min:3})
         .trim(),
-    body('imageUrl','enter valid url')
-        .isURL(),
     body('price','your price must be a numric value')
         .isFloat(),
     body('description','Your description needs to have 5 characters at min and 400 at max')

@@ -1,7 +1,7 @@
 const crypto = require('crypto');
 const User = require('../models/user');
 const bcrypt = require('bcryptjs');
-const { validationResult } = require('express-validator')
+const { validationResult } = require('express-validator');
 
 exports.getLogin = (req, res, next) => {
    // console.log(req.session.isLoggedIn);
@@ -24,7 +24,8 @@ exports.postLogin = (req, res, next) => {
     const password = req.body.password;
 
     const errors = validationResult(req);
-    if(!errors.isEmpty){
+    console.log(errors.array());
+    if(!errors.isEmpty()){
       return res.status(422).render('auth/login' , {
         path: 'login',
         pageTitle: 'Login',
@@ -65,7 +66,7 @@ exports.postLogin = (req, res, next) => {
           res.status(422).render('auth/login' , {
             path: 'login',
             pageTitle: 'Login',
-            errorMessage: errors.array()[0].msg,
+            errorMessage: 'Invalid email or password.',
             oldInput: { 
               email: email,
               password: password
@@ -96,7 +97,8 @@ exports.getSignup = (req, res, next) =>{
       email: "",
       password: "",
       confirmPassword: ""
-    }
+    },
+    validationErrors:[]
   });
 };
 
