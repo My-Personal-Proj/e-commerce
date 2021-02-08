@@ -24,7 +24,7 @@ exports.postLogin = (req, res, next) => {
     const password = req.body.password;
 
     const errors = validationResult(req);
-    if(!errors.array().isEmpty){
+    if(!errors.isEmpty){
       return res.status(422).render('auth/login' , {
         path: 'login',
         pageTitle: 'Login',
@@ -78,7 +78,11 @@ exports.postLogin = (req, res, next) => {
         })
         
       })
-      .catch(err => console.log(err));
+      .catch(err => {
+        const error = new Error (err);
+        error.httpStatusCode = 500;
+        return next(error);
+      });
 };
 
 exports.getSignup = (req, res, next) =>{
